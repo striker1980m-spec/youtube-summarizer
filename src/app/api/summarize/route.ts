@@ -25,11 +25,29 @@ export async function POST(req: Request) {
           const kit = new YtCaptionKit();
           let transcriptData;
           try {
+            // 1순위: Vercel에서 직접 시도
             transcriptData = await kit.fetch(videoId);
           } catch (tErr: any) {
-            console.error(`Transcript kit.fetch failed for ${videoId}:`, tErr);
-            const errorDetail = tErr.message || (typeof tErr === 'string' ? tErr : JSON.stringify(tErr));
-            throw new Error(`자막 로드 실패: ${errorDetail || "상세 원인 없음"}`);
+            console.warn(`Vercel direct fetch failed for ${videoId}, trying local proxy...`);
+            
+            // 2순위: 로컬 프록시 서버(ngrok)가 설정되어 있다면 시도
+            const localProxyUrl = process.env.LOCAL_TRANSCRIPT_PROXY_URL;
+            if (localProxyUrl) {
+              try {
+                const proxyResp = await fetch(`${localProxyUrl}/transcript?videoId=${videoId}`);
+                if (proxyResp.ok) {
+                  transcriptData = await proxyResp.json();
+                } else {
+                  throw new Error(`Proxy returned status ${proxyResp.status}`);
+                }
+              } catch (proxyErr: any) {
+                console.error(`Local proxy fetch failed:`, proxyErr);
+                throw new Error(`자막 로드 실패 (Vercel 차단 및 로컬 프록시 오류): ${tErr.message}`);
+              }
+            } else {
+              const errorDetail = tErr.message || (typeof tErr === 'string' ? tErr : JSON.stringify(tErr));
+              throw new Error(`자막 로드 실패 (Vercel IP 차단): ${errorDetail || "상세 원인 없음"}`);
+            }
           }
 
           if (!transcriptData || !transcriptData.snippets || !Array.isArray(transcriptData.snippets)) {
