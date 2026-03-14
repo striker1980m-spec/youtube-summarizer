@@ -23,7 +23,18 @@ export async function POST(req: Request) {
           if (!videoId) throw new Error("Invalid YouTube URL");
 
           const kit = new YtCaptionKit();
-          const transcriptData = await kit.fetch(videoId);
+          let transcriptData;
+          try {
+            transcriptData = await kit.fetch(videoId);
+          } catch (tErr: any) {
+            console.error(`Transcript fetch failed for ${videoId}:`, tErr);
+            throw new Error(`자막을 가져오지 못했습니다: ${tErr.message || "원인을 알 수 없는 오류"}`);
+          }
+
+          if (!transcriptData || !transcriptData.snippets || !Array.isArray(transcriptData.snippets)) {
+            throw new Error("자막 데이터 형식이 올바르지 않거나 자막이 없습니다.");
+          }
+
           const fullText = transcriptData.snippets.map((t: { text: string }) => t.text).join(" ");
 
           let prompt = "";
@@ -76,8 +87,9 @@ export async function POST(req: Request) {
 
           throw lastError;
         } catch (error: any) {
-          console.error(`Gemini API Error for ${url}:`, error);
-          let userFriendlyMessage = `AI 분석 중 오류가 발생했습니다: ${error.message}`;
+          console.error(`Analysis Error for ${url}:`, error);
+          const rawMessage = error.message || (typeof error === 'string' ? error : JSON.stringify(error)) || "알 수 없는 오류";
+          let userFriendlyMessage = `분석 중 오류가 발생했습니다: ${rawMessage}`;
           
           if (error.message.includes("API key not valid")) {
             userFriendlyMessage = userKey 
