@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { YTTranscript } from "yt-caption-kit";
+import { YtCaptionKit } from "yt-caption-kit";
 import { NextResponse } from "next/server";
 
 const getGenAI = (userKey?: string) => {
@@ -22,7 +22,8 @@ export async function POST(req: Request) {
           const videoId = extractVideoId(url);
           if (!videoId) throw new Error("Invalid YouTube URL");
 
-          const transcriptData = await YTTranscript.getTranscript(videoId);
+          const kit = new YtCaptionKit();
+          const transcriptData = await kit.fetch(videoId);
           const fullText = transcriptData.map((t: { text: string }) => t.text).join(" ");
 
           let prompt = "";
