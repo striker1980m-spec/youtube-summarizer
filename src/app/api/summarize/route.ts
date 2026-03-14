@@ -82,10 +82,14 @@ export async function POST(req: Request) {
             userFriendlyMessage = userKey 
               ? "입력하신 개인 API 키가 유효하지 않습니다. [설정]에서 키를 다시 확인해 주세요."
               : "서비스 공용 API 키가 유효하지 않습니다. 관리자에게 문의하거나 개인 키를 등록해 주세요.";
-          } else if (error.message.includes("429")) {
-            userFriendlyMessage = userKey
-              ? "개인 API 할당량을 초과했습니다. 잠시 후 다시 시도하시거나 키 설정을 확인해 주세요."
-              : "서비스 공용 할당량을 초과했습니다. [설정]에서 개인 API 키를 등록하시면 제한 없이 사용 가능합니다!";
+          } else if (error.message.includes("429") || error.message.toLowerCase().includes("too many requests")) {
+            userFriendlyMessage = "유튜브 서버에서 일시적으로 요청을 거부했습니다(429). 너무 많은 요청이 발생했거나 봇(Bot)으로 의심받고 있을 수 있습니다. 잠시 후 다시 시도해 주세요.";
+          } else if (error.message.includes("confirm you're not a bot") || error.message.includes("Sign in")) {
+            userFriendlyMessage = "유튜브가 현재 우리 앱의 접근을 로봇(Bot)으로 인식하여 차단했습니다. 잠시 후 다시 시도하거나, 제작자가 직접 올린 자막이 있는 다른 영상으로 테스트해 주세요.";
+          } else if (error.message.includes("Transcript is disabled")) {
+            userFriendlyMessage = "해당 유튜브 영상은 자막(Transcript) 기능이 비활성화되어 있어 내용을 가져올 수 없습니다. 자막이 있는 다른 영상을 시도해 주세요.";
+          } else if (error.message.includes("Could not find transcript")) {
+            userFriendlyMessage = "해당 영상에서 자막을 찾을 수 없습니다. 자동 생성 자막이나 수동 자막이 포함된 영상을 사용해 주세요.";
           } else if (error.message.includes("not found")) {
             userFriendlyMessage = "사용 가능한 AI 모델을 찾을 수 없습니다. Google AI Studio에서 모델 권한을 확인해 주세요.";
           }
