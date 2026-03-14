@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
           const kit = new YtCaptionKit();
           const transcriptData = await kit.fetch(videoId);
-          const fullText = transcriptData.map((t: { text: string }) => t.text).join(" ");
+          const fullText = transcriptData.snippets.map((t: { text: string }) => t.text).join(" ");
 
           let prompt = "";
           if (type === "detailed") {
