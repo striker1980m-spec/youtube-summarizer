@@ -23,7 +23,7 @@ export async function POST(req: Request) {
           if (!videoId) throw new Error("Invalid YouTube URL");
 
           const transcriptData = await YTTranscript.getTranscript(videoId);
-          const fullText = transcriptData.map((t) => t.text).join(" ");
+          const fullText = transcriptData.map((t: { text: string }) => t.text).join(" ");
 
           let prompt = "";
           if (type === "detailed") {
