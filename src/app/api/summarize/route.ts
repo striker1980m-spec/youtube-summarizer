@@ -27,8 +27,9 @@ export async function POST(req: Request) {
           try {
             transcriptData = await kit.fetch(videoId);
           } catch (tErr: any) {
-            console.error(`Transcript fetch failed for ${videoId}:`, tErr);
-            throw new Error(`자막을 가져오지 못했습니다: ${tErr.message || "원인을 알 수 없는 오류"}`);
+            console.error(`Transcript kit.fetch failed for ${videoId}:`, tErr);
+            const errorDetail = tErr.message || (typeof tErr === 'string' ? tErr : JSON.stringify(tErr));
+            throw new Error(`자막 로드 실패: ${errorDetail || "상세 원인 없음"}`);
           }
 
           if (!transcriptData || !transcriptData.snippets || !Array.isArray(transcriptData.snippets)) {
